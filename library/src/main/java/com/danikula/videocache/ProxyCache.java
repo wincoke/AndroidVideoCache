@@ -163,11 +163,16 @@ class ProxyCache {
     }
 
     private void closeSource() {
-        try {
-            source.close();
-        } catch (ProxyCacheException e) {
-            onError(new ProxyCacheException("Error closing source " + source, e));
-        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    source.close();
+                } catch (ProxyCacheException e) {
+                    onError(new ProxyCacheException("Error closing source " + source, e));
+                }
+            }
+        }).start();
     }
 
     protected final void onError(final Throwable e) {

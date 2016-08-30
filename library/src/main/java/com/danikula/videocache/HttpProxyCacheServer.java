@@ -63,9 +63,9 @@ public class HttpProxyCacheServer {
     private final Object clientsLock = new Object();
     private final ExecutorService socketProcessor = Executors.newFixedThreadPool(8);
     private final Map<String, HttpProxyCacheServerClients> clientsMap = new ConcurrentHashMap<>();
-    private final ServerSocket serverSocket;
-    private final int port;
-    private final Thread waitConnectionThread;
+    private ServerSocket serverSocket;
+    private int port;
+    private Thread waitConnectionThread;
     private final Config config;
     private boolean pinged;
 
@@ -85,9 +85,10 @@ public class HttpProxyCacheServer {
             startSignal.await(); // freeze thread, wait for server starts
             Log.i(LOG_TAG, "Proxy cache server started. Ping it...");
             makeSureServerWorks();
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             socketProcessor.shutdown();
-            throw new IllegalStateException("Error starting local proxy server", e);
+            pinged = false;
+            //throw new IllegalStateException("Error starting local proxy server", e);
         }
     }
 
@@ -116,7 +117,7 @@ public class HttpProxyCacheServer {
 
     private boolean pingServer() throws ProxyCacheException {
         String pingUrl = appendToProxyUrl(PING_REQUEST);
-        HttpUrlSource source = new HttpUrlSource(pingUrl);
+        final HttpUrlSource source = new HttpUrlSource(pingUrl);
         try {
             byte[] expectedResponse = PING_RESPONSE.getBytes();
             source.open(0);
@@ -129,7 +130,16 @@ public class HttpProxyCacheServer {
             Log.e(LOG_TAG, "Error reading ping response", e);
             return false;
         } finally {
-            source.close();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        source.close();
+                    } catch (ProxyCacheException e) {
+                        onError(e);
+                    }
+                }
+            }).start();
         }
     }
 
