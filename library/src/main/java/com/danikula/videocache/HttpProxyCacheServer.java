@@ -61,7 +61,7 @@ public class HttpProxyCacheServer {
     private static final String PING_RESPONSE = "ping ok";
 
     private final Object clientsLock = new Object();
-    private final ExecutorService socketProcessor = Executors.newFixedThreadPool(8);
+    private final ExecutorService socketProcessor = Executors.newFixedThreadPool(16);
     private final Map<String, HttpProxyCacheServerClients> clientsMap = new ConcurrentHashMap<>();
     private ServerSocket serverSocket;
     private int port;
