@@ -36,9 +36,9 @@ final class HttpProxyCacheServerClients {
     }
 
     public void processRequest(GetRequest request, Socket socket) throws ProxyCacheException, IOException {
-        startProcessRequest();
         try {
             clientsCount.incrementAndGet();
+            startProcessRequest();
             proxyCache.processRequest(request, socket);
         } finally {
             finishProcessRequest();
